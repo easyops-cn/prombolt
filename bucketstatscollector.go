@@ -11,7 +11,6 @@ var _ prometheus.Collector = &bucketStatsCollector{}
 // statistics.
 type bucketStatsCollector struct {
 	name    string
-	db      *bolt.DB
 	forEach func(fn forEachBucketStatsFunc) error
 
 	LogicalBranchPages                *prometheus.Desc
@@ -31,7 +30,7 @@ type bucketStatsCollector struct {
 
 // newBucketStatsCollector creates a new bucketStatsCollector with the specified
 // name and forEachBucketFunc for retrieving statistics.
-func newBucketStatsCollector(name string, db *bolt.DB) *bucketStatsCollector {
+func newBucketStatsCollector(name string, dBStatser DBStatser) *bucketStatsCollector {
 	const (
 		subsystem = "bucket"
 	)
@@ -42,10 +41,9 @@ func newBucketStatsCollector(name string, db *bolt.DB) *bucketStatsCollector {
 
 	return &bucketStatsCollector{
 		name: name,
-		db:   db,
 		// By default, forEach iterates each bucket retrieved from the Bolt
 		// database handle, but this is swappable for tests
-		forEach: forEachWithBoltDB(db),
+		forEach: forEachWithBoltDB(dBStatser),
 
 		LogicalBranchPages: prometheus.NewDesc(
 			prometheus.BuildFQName(namespace, subsystem, "logical_branch_pages"),
@@ -171,8 +169,9 @@ type forEachBucketStatsFunc func(bucket string, s bolt.BucketStats) error
 // function for a bucketStatsCollector.  The returned function is invoked
 // repeatedly for each bucket and its stats retrieved from the Bolt database
 // handle.
-func forEachWithBoltDB(db *bolt.DB) func(forEachBucketStatsFunc) error {
+func forEachWithBoltDB(dBStatser DBStatser) func(forEachBucketStatsFunc) error {
 	return func(iter forEachBucketStatsFunc) error {
+		db := dBStatser.GetDB()
 		return db.View(func(tx *bolt.Tx) error {
 			return tx.ForEach(func(name []byte, b *bolt.Bucket) error {
 				// TODO(mdlayher): if/when possible, iterate child buckets and
