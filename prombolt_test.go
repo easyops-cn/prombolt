@@ -39,15 +39,28 @@ func testCollector(t *testing.T, collector prometheus.Collector) string {
 func TestRegisterer(t *testing.T) {
 	reg := prometheus.NewRegistry()
 	{
-		db := new(bolt.DB)
-		if err := reg.Register(New("db_A", db)); err != nil {
+		if err := reg.Register(New("db_A", &fakeDBStatser{db: new(bolt.DB)})); err != nil {
 			t.Fatal(err)
 		}
 	}
 	{
-		db := new(bolt.DB)
-		if err := reg.Register(New("db_B", db)); err != nil {
+		if err := reg.Register(New("db_B", &fakeDBStatser{db: new(bolt.DB)})); err != nil {
 			t.Fatal(err)
 		}
 	}
+}
+
+var _ statser = &fakeDBStatser{}
+
+type fakeDBStatser struct {
+	s  bolt.Stats
+	db *bolt.DB
+}
+
+func (s *fakeDBStatser) Stats() bolt.Stats {
+	return s.s
+}
+
+func (s *fakeDBStatser) GetDB() *bolt.DB {
+	return s.db
 }

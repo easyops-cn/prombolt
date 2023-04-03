@@ -13,15 +13,20 @@ const (
 	namespace = "bolt"
 )
 
+type DBStatser interface {
+	GetDB() *bolt.DB
+	Stats() bolt.Stats
+}
+
 // New creates a new prometheus.Collector that can be registered with
 // Prometheus to scrape metrics from a Bolt database handle.
 //
 // Name should specify a unique name for the collector, and will be added
 // as a label to all produced Prometheus metrics.
-func New(name string, db *bolt.DB) prometheus.Collector {
+func New(name string, dbStatser DBStatser) prometheus.Collector {
 	return &collector{
-		stats:       newStatsCollector(name, db),
-		bucketStats: newBucketStatsCollector(name, db),
+		stats:       newStatsCollector(name, dbStatser),
+		bucketStats: newBucketStatsCollector(name, dbStatser),
 	}
 }
 
