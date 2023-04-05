@@ -14,8 +14,8 @@ const (
 )
 
 type DBStatser interface {
-	GetDB() *bolt.DB
 	Stats() bolt.Stats
+	ViewBucketStats(iter func(bucket string, s bolt.BucketStats) error) error
 }
 
 // New creates a new prometheus.Collector that can be registered with
