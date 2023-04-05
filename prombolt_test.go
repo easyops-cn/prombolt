@@ -61,6 +61,6 @@ func (s *fakeDBStatser) Stats() bolt.Stats {
 	return s.s
 }
 
-func (s *fakeDBStatser) GetDB() *bolt.DB {
-	return s.db
+func (s *fakeDBStatser) ViewBucketStats(iter func(bucket string, s bolt.BucketStats) error) error {
+	return nil
 }

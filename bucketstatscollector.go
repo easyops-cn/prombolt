@@ -171,15 +171,7 @@ type forEachBucketStatsFunc func(bucket string, s bolt.BucketStats) error
 // handle.
 func forEachWithBoltDB(dBStatser DBStatser) func(forEachBucketStatsFunc) error {
 	return func(iter forEachBucketStatsFunc) error {
-		db := dBStatser.GetDB()
-		return db.View(func(tx *bolt.Tx) error {
-			return tx.ForEach(func(name []byte, b *bolt.Bucket) error {
-				// TODO(mdlayher): if/when possible, iterate child buckets and
-				// collect metrics for them as well.
-				// See: https://github.com/boltdb/bolt/issues/603.
-				return iter(string(name), b.Stats())
-			})
-		})
+		return dBStatser.ViewBucketStats(iter)
 	}
 }
 
